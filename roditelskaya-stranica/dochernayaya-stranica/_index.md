@@ -41,6 +41,8 @@ title: Тестовая страница
 
 * [x] Затестить список задач
 
+
+
 ```javascript
 console.log('Привет, Gramax')
 ```
@@ -96,19 +98,19 @@ console.log('Привет, Gramax')
 
 ![](./_index.png "Даже какие-то вычисления есть в таблице. А еще можно скрин вставить и подписать."){width=891px height=288px}
 
-<note type="quote">
+<note type="quote" title="Подробнее">
 
 Умная цитата
 
 </note>
 
-<note type="info">
+<note type="info" title="Подробнее" collapsed="true">
 
 Информация
 
 </note>
 
-<note type="tip">
+<note type="tip" title="Подробнее" collapsed="true">
 
 Совет
 
@@ -132,11 +134,25 @@ console.log('Привет, Gramax')
 
 </note>
 
-<drawio path="./_index.svg" title="Не прогружается, не получилось отредактировать(((" width="211px" height="101px"/>
+
+
+
+
+<drawio path="./_index.svg" width="292px" height="232px"/>
+
+![](./dochernayaya-stranica.png "Выглядит, как старый-добрый draw.io"){width=2558px height=1189px}
+
+
+
+
 
 <plant-uml path="./_index.puml" width="266px" height="120px"/>
 
 ![](./_index-2.png "Вот так выглядит редактор"){width=1319px height=877px}
+
+
+
+
 
 <openapi src="./_index.yaml" flag="true"/>
 
@@ -168,10 +184,14 @@ console.log('Привет, Gramax')
 
 [Hao Qiang, Tsikerdekis Michail - Grokking Relational Database Design - 2025.pdf](<./Hao Qiang, Tsikerdekis Michail - Grokking Relational Database Design - 2025.pdf>)
 
-<video path="https://www.youtube.com/watch?v=uG2jjvSfJAQ"/>
+<video path="https://www.youtube.com/watch?v=mF1uFZcxNas&t=1s"/>
+
+
 
 Какие-то иконки:
 
 <icon code="airplay"/> <icon code="album"/> <icon code="chart-pie"/>
+
+
 
 [27\.02.2026, 15.56-2.wav](<./27.02.2026, 15.56-2.wav>)
