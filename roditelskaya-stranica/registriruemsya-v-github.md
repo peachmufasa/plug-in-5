@@ -13,7 +13,53 @@ title: "Инструкция\_«Как подружится c GitHub»"
 
 Регистрируемся на GitHub. Если есть учетка, отлично, давай подождем тех, у кого ее нет.
 
+## Загрузка каталога
+
+1. Перейти по ссылке [https://app.gram.ax/github.com/peachmufasa/plug-in-5/instruction/-](https://app.gram.ax/github.com/peachmufasa/plug-in-5/instruction/-)
+
+2. Нажать «Загрузить»
+
+   ![](./registriruemsya-v-github-4.png){width=606px height=297px}
+
+3. Нажать «Добавить хранилище»
+
+   ![](./registriruemsya-v-github-5.png){width=588px height=252px}
+
+4. Нажать «Войти в GitHub»
+
+   ![](./registriruemsya-v-github-6.png){width=606px height=421px}
+
+5. Нажать «Authorize Gram.ax»
+
+   ![](./registriruemsya-v-github-7.png){width=477px height=517px}
+
+6. Нажать «Добавить»
+
+   ![](./registriruemsya-v-github-8.png){width=591px height=413px}
+
+## Клонирование репозитория (опционально)
+
+<note type="tip">
+
+Можно склонировать репозиторий и открыть, например, в Visual Studio Code
+
+</note>
+
+1. Открыть терминал и перейти в ту папку, в которой хочется положить проект ИЛИ открыть терминал из папки, в которой хочется положить проект.
+
+2. Ввести команду:
+
+   ```
+   git clone git@github.com:peachmufasa/plug-in-5.git
+   ```
+
 ## SSH-ключ
+
+<note>
+
+Это нужно, чтобы можно было склонировать репозиторий себе на компьютер
+
+</note>
 
 [Инструкция с сайта GitHub](https://docs.github.com/ru/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 
@@ -29,7 +75,7 @@ title: "Инструкция\_«Как подружится c GitHub»"
    ssh-keygen -t ed25519 -C "your_email@example.com"
    ```
 
-   *(заменить* `your_email@example.com` *на свою почту)*
+   *(заменить* [`your_email@example.com`](mailto:your_email@example.com) *на свою почту)*
 
    Enter file in which to save the key… - нажимаем Enter
 
@@ -49,11 +95,11 @@ title: "Инструкция\_«Как подружится c GitHub»"
    cat ~/.ssh/id_ed25519.pub
    ```
 
-   Скопировать ключ `ssh-ed25519 <…> your_email@example.com`
+   Скопировать ключ `ssh-ed25519 <…>` [`your_email@example.com`](mailto:your_email@example.com)
 
 5. Добавить SSH-ключ в GitHub
 
-   <image src="./registriruemsya-v-github-2.png" crop="0,0,100,100" objects="annotation,92.2743,21.1753,Тык сюда,top-left" width="2698px" height="1156px" float="center"/>
+   <image src="./registriruemsya-v-github-9.png" crop="0,0,100,100" objects="annotation,92.2743,21.1753,Тык сюда,top-left" width="2698px" height="1156px" float="center"/>
 
 </tab>
 
@@ -67,7 +113,7 @@ title: "Инструкция\_«Как подружится c GitHub»"
    ssh-keygen -t ed25519 -C "your_email@example.com"
    ```
 
-   *(заменить* `your_email@example.com` *на свою почту)*
+   *(заменить* [`your_email@example.com`](mailto:your_email@example.com) *на свою почту)*
 
    Enter file in which to save the key… - нажимаем Enter
 
@@ -96,18 +142,16 @@ title: "Инструкция\_«Как подружится c GitHub»"
 
 6. Добавить SSH-ключ в GitHub
 
-   <image src="./registriruemsya-v-github-3.png" crop="0,0,100,100" objects="annotation,91.0156,19.3146,Тык сюда,top-left" width="2760px" height="1154px" float="center"/>
+   <image src="./registriruemsya-v-github-10.png" crop="0,0,100,100" objects="annotation,91.0156,19.3146,Тык сюда,top-left" width="2760px" height="1154px" float="center"/>
+
+</tab>
+
+<tab>
+
+
 
 </tab>
 
 </tabs>
 
-## Клонируем репозиторий
-
-1. Открыть терминал и перейти в ту папку, в которой хочется положить проект ИЛИ открыть терминал из папки, в которой хочется положить проект.
-
-2. Ввести команду:
-
-   ```
-   git clone git@github.com:peachmufasa/plug-in-5.git
-   ```
+## 
