@@ -1,9 +1,7 @@
 ---
-order: 1
-title: Дочерняя страница
+order: 0.2
+title: Тестовая страница
 ---
-
-Все еще знакомлюсь с Gramax
 
 ## Заголовок 2 уровня
 
@@ -90,13 +88,13 @@ console.log('Привет, Gramax')
 </td>
 <td>
 
- 
+
 
 </td>
 </tr>
 </table>
 
-![](./dochernayaya-stranica.png "Даже какие-то вычисления есть в таблице. А еще можно скрин вставить и подписать."){width=891px height=288px}
+![](./_index.png "Даже какие-то вычисления есть в таблице. А еще можно скрин вставить и подписать."){width=891px height=288px}
 
 <note type="quote">
 
@@ -134,15 +132,15 @@ console.log('Привет, Gramax')
 
 </note>
 
-<drawio path="./dochernayaya-stranica.svg" title="Не прогружается, не получилось отредактировать(((" width="211px" height="101px"/>
+<drawio path="./_index.svg" title="Не прогружается, не получилось отредактировать(((" width="211px" height="101px"/>
 
-<plant-uml path="./dochernayaya-stranica.puml" width="266px" height="120px"/>
+<plant-uml path="./_index.puml" width="266px" height="120px"/>
 
-![](./dochernayaya-stranica-2.png "Вот так выглядит редактор"){width=1319px height=877px}
+![](./_index-2.png "Вот так выглядит редактор"){width=1319px height=877px}
 
-<openapi src="./dochernayaya-stranica.yaml" flag="true"/>
+<openapi src="./_index.yaml" flag="true"/>
 
-![](./dochernayaya-stranica-3.png "Вот так выглядит редактор"){width=1298px height=856px}
+![](./_index-3.png "Вот так выглядит редактор"){width=1298px height=856px}
 
 <tabs>
 
