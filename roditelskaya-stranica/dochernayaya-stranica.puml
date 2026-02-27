@@ -1,0 +1,3 @@
+@startuml
+Саша -> Gramax : Хочу затестить PlantUML
+@enduml
