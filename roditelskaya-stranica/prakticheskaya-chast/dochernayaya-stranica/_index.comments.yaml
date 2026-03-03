@@ -7,4 +7,10 @@ VXSaU:
     content: >-
       А это я комментирую, чтобы посмотреть, отобразится ли коммент в
       опубликованной доке
-  answers: []
+  answers:
+    - dateTime: '2026-03-03T10:30:08.378Z'
+      user:
+        mail: alexandra-novoselova96@yandex.ru
+        name: peachmufasa
+        id: alexandra-novoselova96@yandex.ru
+      content: Нет, не отображается
