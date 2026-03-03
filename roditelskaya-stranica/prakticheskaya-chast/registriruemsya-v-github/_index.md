@@ -1,5 +1,5 @@
 ---
-order: 0.3
+order: 1.2
 title: "Инструкция\_«Как подружится c GitHub»"
 ---
 
@@ -9,7 +9,7 @@ title: "Инструкция\_«Как подружится c GitHub»"
 
 ## Регистрация в GitHub
 
-<image src="./registriruemsya-v-github.png" crop="0,0,100,100" width="563px" height="88px" float="left"/>
+<image src="./_index.png" crop="0,0,100,100" width="563px" height="88px" float="left"/>
 
 Регистрируемся на GitHub. Если есть учетка, отлично, давай подождем тех, у кого ее нет.
 
@@ -19,23 +19,23 @@ title: "Инструкция\_«Как подружится c GitHub»"
 
 2. Нажать «Загрузить»
 
-   ![](./registriruemsya-v-github-4.png){width=606px height=297px}
+   ![](./_index-4.png){width=606px height=297px}
 
 3. Нажать «Добавить хранилище»
 
-   ![](./registriruemsya-v-github-5.png){width=588px height=252px}
+   ![](./_index-5.png){width=588px height=252px}
 
 4. Нажать «Войти в GitHub»
 
-   ![](./registriruemsya-v-github-6.png){width=606px height=421px}
+   ![](./_index-6.png){width=606px height=421px}
 
 5. Нажать «Authorize Gram.ax»
 
-   ![](./registriruemsya-v-github-7.png){width=477px height=517px}
+   ![](./_index-7.png){width=477px height=517px}
 
 6. Нажать «Добавить»
 
-   ![](./registriruemsya-v-github-8.png){width=591px height=413px}
+   ![](./_index-8.png){width=591px height=413px}
 
 ## Клонирование репозитория (опционально)
 
@@ -99,7 +99,7 @@ title: "Инструкция\_«Как подружится c GitHub»"
 
 5. Добавить SSH-ключ в GitHub
 
-   <image src="./registriruemsya-v-github-9.png" crop="0,0,100,100" objects="annotation,92.2743,21.1753,Тык сюда,top-left" width="2698px" height="1156px" float="center"/>
+   <image src="./_index-9.png" crop="0,0,100,100" objects="annotation,92.2743,21.1753,Тык сюда,top-left" width="2698px" height="1156px" float="center"/>
 
 </tab>
 
@@ -142,7 +142,7 @@ title: "Инструкция\_«Как подружится c GitHub»"
 
 6. Добавить SSH-ключ в GitHub
 
-   <image src="./registriruemsya-v-github-10.png" crop="0,0,100,100" objects="annotation,91.0156,19.3146,Тык сюда,top-left" width="2760px" height="1154px" float="center"/>
+   <image src="./_index-10.png" crop="0,0,100,100" objects="annotation,91.0156,19.3146,Тык сюда,top-left" width="2760px" height="1154px" float="center"/>
 
 </tab>
 

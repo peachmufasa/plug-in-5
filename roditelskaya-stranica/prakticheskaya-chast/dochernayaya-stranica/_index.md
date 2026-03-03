@@ -1,9 +1,9 @@
 ---
 order: 0.2
-title: Тестовая страница
+title: Что есть в Gramax
 ---
 
-## Заголовок 2 уровня
+## <comment id="VXSaU">Заголовок 2 уровня</comment>
 
 ### Заголовок 3 уровня
 
@@ -179,8 +179,6 @@ console.log('Привет, Gramax')
 </tab>
 
 </tabs>
-
-<view display="List"/>
 
 [Hao Qiang, Tsikerdekis Michail - Grokking Relational Database Design - 2025.pdf](<./Hao Qiang, Tsikerdekis Michail - Grokking Relational Database Design - 2025.pdf>)
 
