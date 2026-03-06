@@ -51,3 +51,5 @@ title: тест таблицы
 </td>
 </tr>
 </table>
+
+<drawio path="./test-tablicy.svg" width="211px" height="101px"/>
