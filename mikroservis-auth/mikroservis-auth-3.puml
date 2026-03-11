@@ -1,0 +1,22 @@
+@startuml
+actor "Пользователь" as User
+participant "Фронт" as Front
+participant "Бек" as Back
+
+User -> Front++: Переходит на страницу графиков
+Front -> Back++: GET /schedule (с access токеном)
+Back --> Front: 200 OK (данные графиков)
+Front --> User: Отрисовывает графики
+
+User -> Front: Нажимает на профиль
+Front --> User: Показывает выпадающее меню
+
+User -> Front: Нажимает "Выйти"
+Front --> User: Показывает модалку "Вы уверены?"
+
+User -> Front: Нажимает "Да"
+Front -> Back: POST /auth/logout (с токенами)
+Back -> Back: обнуляет куки
+Back --> Front--: 204 Токены обнулены
+Front --> User--: Перенаправляет на страницу авторизации
+@enduml
