@@ -1,0 +1,8 @@
+creator: Morisamer <seliwerstov.anton2014@yandex.ru>
+targetBranch: master
+createdAt: '2026-03-11 10:09:51'
+approvers:
+- user: peachmufasa <alexandra-novoselova96@yandex.ru>
+options:
+  deleteAfterMerge: true
+  squash: true
