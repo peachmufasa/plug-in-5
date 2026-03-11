@@ -1,0 +1,25 @@
+@startuml
+actor "Пользователь" as User
+participant "Фронтенд" as Front
+participant "Бекенд" as Back
+
+User -> Front++: Переходит на страницу графиков
+Front -> Back++: GET /schedule (с access токеном)
+
+Back --> Front: 401 Unauthorized\n(Токен истёк)
+
+Front -> Back: POST /auth/refresh\n(с refresh токеном)
+
+alt Успешное обновление
+    Back -> Back: Проверяет refresh токен
+    Back --> Front: 201 (новая пара токенов)
+    Front -> Front: Записывает токены в куки
+    Front -> Back: Повторяет GET /schedule (с новым токеном)
+    Back --> Front: 200 (данные графиков)
+    Front --> User: Отображает страницу с графиками
+else Ошибка обновления
+    Back -> Back: Не может верифицировать refresh токен
+    Back --> Front--: 401 Unauthorized
+    Front --> User--: Показывает окно авторизации
+end
+@enduml
