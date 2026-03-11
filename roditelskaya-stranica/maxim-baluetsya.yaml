@@ -1,0 +1,1116 @@
+openapi: 3.0.1
+info:
+  title: Schedule Service API
+  description: |
+    API для управления сменами сотрудников, шаблонами и учетом посещаемости.
+    Сервис предназначен для хранения информации о сменах и предоставления данных для отрисовки графиков на фронте.
+  version: v1.3
+servers:
+  - url: https://test.best.atbplugin.tech/api/schedule
+    description: Тестовый сервер
+tags:
+  - name: Shifts
+    description: Операции со сменами
+  - name: Templates
+    description: Операции с шаблонами смен
+  - name: Attendance
+    description: Учет посещаемости (фактические явки/неявки)
+  - name: Conflicts
+    description: Проверка конфликтов в расписании
+  - name: Analytics
+    description: Аналитика по отработанным и запланированным часам
+  - name: SubstitutionRequests
+    description: Заявки на подмену сотрудников
+paths:
+  /schedule:
+    post:
+      tags: [Shifts]
+      summary: Создание новых смен
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: '#/components/schemas/ShiftCreateRequest' }
+      responses:
+        '201':
+          description: Смены успешно созданы
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ShiftResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Конфликт при создании
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResponseError' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    get:
+      tags: [Shifts]
+      summary: Получение расписания с фильтрацией
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: employeeId
+          in: query
+          description: Список ID сотрудников (максимум 100)
+          required: false
+          schema:
+            type: array
+            items: { type: integer, minimum: 1 }
+            maxItems: 100
+          style: form
+          explode: true
+        - name: officeId
+          in: query
+          description: Список ID офисов (максимум 100)
+          required: false
+          schema:
+            type: array
+            items: { type: integer, minimum: 1 }
+            maxItems: 100
+          style: form
+          explode: true
+        - name: divisionId
+          in: query
+          description: Список ID направлений
+          required: false
+          schema:
+            type: array
+            items: { type: integer, minimum: 1 }
+          style: form
+          explode: true
+        - name: areaId
+          in: query
+          description: ID города или региона
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - name: startDate
+          in: query
+          description: Начало периода (YYYY-MM-DD)
+          required: true
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          description: Конец периода (YYYY-MM-DD)
+          required: true
+          schema: { type: string, format: date }
+        - name: role
+          in: query
+          description: Роль пользователя. (ROLE_EMPLOYEE, ROLE_OFFICE_MANAGER, ROLE_TERRITORY_MANAGER)
+          required: true
+          schema:
+            type: string
+            enum: [ROLE_EMPLOYEE, ROLE_OFFICE_MANAGER, ROLE_TERRITORY_MANAGER]
+        - name: include
+          in: query
+          description: Список возвращаемых смежных сущностей (offices, employees, divisions)
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [offices, employees, divisions]
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduleResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '414': { $ref: '#/components/responses/URITooLong' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    put:
+      tags: [Shifts]
+      summary: Обновление существующих смен
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: '#/components/schemas/ShiftUpdateRequest' }
+      responses:
+        '200':
+          description: Смены успешно обновлены
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ShiftResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    patch:
+      tags: [Shifts]
+      summary: Публикация смен (изменение статуса на "release")
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShiftPublishRequest' }
+      responses:
+        '200':
+          description: Словарь соответствия старых и новых ID смен
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    delete:
+      tags: [Shifts]
+      summary: Удаление смен
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: shiftId
+          required: true
+          description: Список ID смен для удаления
+          schema:
+            type: array
+            items: { type: integer, minimum: 1 }
+          style: form
+          explode: true
+      responses:
+        '204': { description: Смены успешно удалены }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /templates:
+    get:
+      tags: [Templates]
+      summary: Получение списка шаблонов для офиса
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: officeId
+          in: query
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Список шаблонов
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DayTemplate' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    post:
+      tags: [Templates]
+      summary: Создание нового шаблона
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DayTemplateCreateRequest' }
+      responses:
+        '201':
+          description: Шаблон создан
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DayTemplate' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    delete:
+      tags: [Templates]
+      summary: Удаление шаблона
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: templateId
+          in: query
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '204': { description: Шаблон удален }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    patch:
+      tags: [Templates]
+      summary: Обновление шаблона
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: templateId
+          in: query
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DayTemplateUpdateRequest' }
+      responses:
+        '200':
+          description: Шаблон обновлен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DayTemplate' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /apply-template:
+    post:
+      tags: [Templates]
+      summary: Применить шаблоны к нескольким дням
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApplyTemplateRequest' }
+      responses:
+        '201':
+          description: Шаблоны успешно применены
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApplyTemplateResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /attendance:
+    get:
+      tags: [Attendance]
+      summary: Получение статусов посещаемости для смен
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: shiftIds
+          in: query
+          required: true
+          description: Список ID смен (макс. 100)
+          schema:
+            type: array
+            items: { type: integer, minimum: 1 }
+            maxItems: 100
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: Объект посещаемости
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttendanceResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    post:
+      tags: [Attendance]
+      summary: Создание записи посещаемости
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AttendanceCreateRequest' }
+      responses:
+        '201':
+          description: Запись создана
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttendanceDto' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    put:
+      tags: [Attendance]
+      summary: Полное обновление записи посещаемости
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AttendanceUpdateRequest' }
+      responses:
+        '200':
+          description: Запись обновлена
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttendanceDto' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /attendance/bulk-mark:
+    post:
+      tags: [Attendance]
+      summary: Массовая отметка всех смен в офисе за день как 'Явка'
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BulkMarkRequest' }
+      responses:
+        '200':
+          description: Результат массовой отметки
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BulkMarkResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /conflicts:
+    get:
+      tags: [Conflicts]
+      summary: Получение списка смен, конфликтующих с указанным периодом
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: employeeId
+          in: query
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - name: startDate
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Список конфликтующих смен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConflictsResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /hours-analytics:
+    get:
+      tags: [Analytics]
+      summary: Получение информации об отработанных часах (для аналитики)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: employeeIds
+          in: query
+          description: Список ID сотрудников
+          required: false
+          schema:
+            type: array
+            items: { type: integer, minimum: 1 }
+          style: form
+          explode: true
+        - name: officeIds
+          in: query
+          description: Список ID офисов
+          required: false
+          schema:
+            type: array
+            items: { type: integer, minimum: 1 }
+          style: form
+          explode: true
+        - name: startDate
+          in: query
+          description: Начало периода (YYYY-MM-DD)
+          required: true
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          description: Конец периода (YYYY-MM-DD)
+          required: true
+          schema: { type: string, format: date }
+        - name: pageNumber
+          in: query
+          description: Номер страницы (начиная с 0)
+          required: true
+          schema: { type: integer, minimum: 0 }
+        - name: pageSize
+          in: query
+          description: Количество элементов на странице (макс. 100)
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 100 }
+      responses:
+        '200':
+          description: Успешный ответ с данными аналитики
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HoursAnalyticsResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /hours:
+    get:
+      tags: [Analytics]
+      summary: Получение информации о запланированных часах (для планирования)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: employeeIds
+          in: query
+          description: Список ID сотрудников
+          required: true
+          schema:
+            type: array
+            items: { type: integer, minimum: 1 }
+          style: form
+          explode: true
+        - name: startDate
+          in: query
+          description: Начало периода (YYYY-MM-DD)
+          required: true
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          description: Конец периода (YYYY-MM-DD)
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Успешный ответ с запланированными минутами
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlannedHoursResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /substitution-requests:
+    post:
+      tags: [SubstitutionRequests]
+      summary: Создать заявку на подмену (плановое)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubstitutionRequestCreate' }
+      responses:
+        '201':
+          description: Заявка успешно создана
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubstitutionRequest' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    get:
+      tags: [SubstitutionRequests]
+      summary: Получить список заявок на подмену (с фильтрацией и пагинацией)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: regionId
+          in: query
+          description: ID региона (обязателен для ROLE_TERRITORY_MANAGER)
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - name: officeId
+          in: query
+          description: ID офиса (обязателен для ROLE_OFFICE_MANAGER)
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - name: status
+          in: query
+          description: Фильтр по статусу заявки
+          required: false
+          schema:
+            type: string
+            enum: [in_progress, assigned, cancelled]
+        - name: isUrgent
+          in: query
+          description: Фильтр по срочности
+          required: false
+          schema: { type: boolean }
+        - name: divisionId
+          in: query
+          description: Фильтр по направлению
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - name: pageNumber
+          in: query
+          description: Номер страницы (начиная с 0)
+          required: true
+          schema: { type: integer, minimum: 0 }
+        - name: pageSize
+          in: query
+          description: Количество элементов на странице (макс. 10)
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 10 }
+      responses:
+        '200':
+          description: Успешный ответ со списком заявок
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubstitutionRequestListResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /substitution-requests/now:
+    post:
+      tags: [SubstitutionRequests]
+      summary: Создать заявку на подмену при неявке
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubstitutionRequestNowCreate' }
+      responses:
+        '201':
+          description: Заявка и новая смена успешно созданы
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubstitutionRequestNowResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /substitution-requests/cancel:
+    put:
+      tags: [SubstitutionRequests]
+      summary: Отменить заявку на подмену
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubstitutionRequestCancel' }
+      responses:
+        '200':
+          description: Заявка успешно отменена
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubstitutionRequest' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /substitution-requests/{requestId}:
+    delete:
+      tags: [SubstitutionRequests]
+      summary: Удалить заявку на подмену (безвозвратно)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          description: ID заявки на подмену
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '204': { description: Заявка успешно удалена }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /substitution-requests/{requestId}/assign:
+    post:
+      tags: [SubstitutionRequests]
+      summary: Назначить сотрудника на заявку подмены
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          description: ID заявки на подмену
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubstitutionRequestAssign' }
+      responses:
+        '200':
+          description: Сотрудник успешно назначен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubstitutionRequest' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /substitution-requests/by-shift/{shiftId}:
+    get:
+      tags: [SubstitutionRequests]
+      summary: Получить заявку по ID смены (если есть)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: shiftId
+          in: path
+          required: true
+          description: ID смены
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Заявка найдена или null
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/SubstitutionRequest' }
+                  - { nullable: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Введите access-токен для доступа
+  responses:
+    BadRequest:
+      description: 'Ошибка в запросе (HTTP 400)'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ResponseError' }
+    Unauthorized:
+      description: 'Не авторизован (HTTP 401)'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ResponseError' }
+    Forbidden:
+      description: 'Доступ запрещен (HTTP 403)'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ResponseError' }
+    NotFound:
+      description: 'Ресурс не найден (HTTP 404)'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ResponseError' }
+    Conflict:
+      description: 'Конфликт с текущим состоянием (HTTP 409)'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ResponseError' }
+    InternalServerError:
+      description: 'Внутренняя ошибка сервера (HTTP 500)'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ResponseError' }
+    URITooLong:
+      description: 'URI слишком длинный (HTTP 414)'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ResponseError' }
+    TooManyRequests:
+      description: 'Слишком много запросов (HTTP 429)'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ResponseError' }
+    BadGateway:
+      description: 'Ошибка при обращении к стороннему сервису (HTTP 502)'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ResponseError' }
+  schemas:
+    ResponseError:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+    # --- Смены (Shifts) ---
+    ShiftCreateRequest:
+      type: object
+      required: [officeId, divisionId, startAt, endAt, status]
+      properties:
+        employeeId: { type: integer, nullable: true, minimum: 1 }
+        officeId: { type: integer, minimum: 1 }
+        divisionId: { type: integer, minimum: 1 }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        inheritFrom: { type: integer, nullable: true, minimum: 1 }
+        status: { type: string, enum: [draft, delete] }
+    ShiftUpdateRequest:
+      type: object
+      required: [shiftId, officeId, divisionId, startAt, endAt, status]
+      properties:
+        shiftId: { type: integer, minimum: 1 }
+        employeeId: { type: integer, nullable: true, minimum: 1 }
+        officeId: { type: integer, minimum: 1 }
+        divisionId: { type: integer, minimum: 1 }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        status: { type: string, enum: [draft, delete] }
+    ShiftResponse:
+      type: object
+      required: [id, officeId, divisionId, startAt, endAt]
+      properties:
+        id: { type: integer }
+        employeeId: { type: integer, nullable: true }
+        officeId: { type: integer }
+        divisionId: { type: integer }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        status: { type: string, enum: [draft, release, delete, substitution] }
+    ShiftPublishRequest:
+      type: object
+      required: [release]
+      properties:
+        release:
+          type: array
+          items: { type: integer, minimum: 1 }
+    # --- Ответ со сменами (GET /schedule) ---
+    OfficeDto:
+      type: object
+      required: [id, regionId, name, address, colorCode, totalWorkplaces]
+      properties:
+        id: { type: integer }
+        regionId: { type: integer }
+        name: { type: string }
+        address: { type: string }
+        colorCode: { type: string }
+        totalWorkplaces: { type: integer }
+    EmployeeDto:
+      type: object
+      required: [id, firstName, surname, divisionId]
+      properties:
+        id: { type: integer }
+        firstName: { type: string }
+        surname: { type: string }
+        lastName: { type: string, nullable: true }
+        divisionId: { type: integer }
+    DivisionDto:
+      type: object
+      required: [id, name, colorCode]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        colorCode: { type: string }
+    ScheduleResponse:
+      type: object
+      required: [shifts, offices, employees, divisions]
+      properties:
+        shifts: { type: array, items: { $ref: '#/components/schemas/ShiftResponse' } }
+        offices:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/OfficeDto' }
+        employees:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/EmployeeDto' }
+        divisions:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/DivisionDto' }
+    # --- Шаблоны (Templates) ---
+    ShiftTemplate:
+      type: object
+      required: [divisionId, startOn, endOn, amountWorkplaces]
+      properties:
+        divisionId: { type: integer }
+        startOn: { type: string }
+        endOn: { type: string }
+        amountWorkplaces: { type: integer, minimum: 1 }
+    DayTemplate:
+      type: object
+      required: [id, name, officeId, templateShifts]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        officeId: { type: integer }
+        templateShifts: { type: array, items: { $ref: '#/components/schemas/ShiftTemplate' } }
+    DayTemplateCreateRequest:
+      type: object
+      required: [name, officeId, templateShifts]
+      properties:
+        name: { type: string }
+        officeId: { type: integer }
+        templateShifts: { type: array, items: { $ref: '#/components/schemas/ShiftTemplate' } }
+    DayTemplateUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        officeId: { type: integer }
+        templateShifts: { type: array, items: { $ref: '#/components/schemas/ShiftTemplate' } }
+    ApplyTemplateItem:
+      type: object
+      required: [date, templateId]
+      properties:
+        date: { type: string, format: date }
+        templateId: { type: integer, minimum: 1 }
+    ApplyTemplateRequest:
+      type: object
+      required: [officeId, items]
+      properties:
+        officeId: { type: integer, minimum: 1 }
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/ApplyTemplateItem' }
+    ApplyTemplateResponse:
+      type: object
+      required: [shifts, deletedCount]
+      properties:
+        shifts: { type: array, items: { $ref: '#/components/schemas/ShiftResponse' } }
+        deletedCount: { type: integer }
+    # --- Посещаемость (Attendance) ---
+    AttendanceDto:
+      type: object
+      required: [id, shiftId, status]
+      properties:
+        id: { type: integer }
+        shiftId: { type: integer }
+        status: { type: string, enum: [APPEARANCE, NON_APPEARANCE] }
+        actualStart: { type: string, nullable: true }
+        actualEnd: { type: string, nullable: true }
+        absenceReason: { type: string, nullable: true, enum: [respectful, disrespectful] }
+    AttendanceCreateRequest:
+      type: object
+      required: [shiftId, status]
+      properties:
+        shiftId: { type: integer }
+        status: { type: string, enum: [APPEARANCE, NON_APPEARANCE] }
+        actualStart: { type: string, nullable: true }
+        actualEnd: { type: string, nullable: true }
+        absenceReason: { type: string, nullable: true, enum: [respectful, disrespectful] }
+    AttendanceUpdateRequest:
+      type: object
+      required: [id, status]
+      properties:
+        id: { type: integer, minimum: 1 }
+        status: { type: string, enum: [APPEARANCE, NON_APPEARANCE] }
+        actualStart: { type: string, nullable: true }
+        actualEnd: { type: string, nullable: true }
+        absenceReason: { type: string, nullable: true, enum: [respectful, disrespectful] }
+    AttendanceResponse:
+      type: object
+      required: [attendances]
+      properties:
+        attendances:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/AttendanceDto' }
+    BulkMarkRequest:
+      type: object
+      required: [officeId, date]
+      properties:
+        officeId: { type: integer }
+        date: { type: string, format: date }
+    BulkMarkResponse:
+      type: object
+      required: [processedCount]
+      properties:
+        processedCount: { type: integer }
+    # --- Конфликты (Conflicts) ---
+    ConflictDto:
+      type: object
+      required: [shiftId, date, startTime, endTime, officeId, officeName, divisionId, divisionName]
+      properties:
+        shiftId: { type: integer }
+        date: { type: string, format: date }
+        startTime: { type: string }
+        endTime: { type: string }
+        officeId: { type: integer }
+        officeName: { type: string }
+        divisionId: { type: integer }
+        divisionName: { type: string }
+    ConflictsResponse:
+      type: object
+      required: [conflicts]
+      properties:
+        conflicts: { type: array, items: { $ref: '#/components/schemas/ConflictDto' } }
+    # --- Аналитика (Analytics) ---
+    EmployeeHoursDto:
+      type: object
+      required: [employeeId, targetMinutes, curMinutes, debtMinutes, contractMinutes, lates, earlyDepartures, absenteeism, attendance]
+      properties:
+        employeeId: { type: integer }
+        targetMinutes: { type: integer }
+        curMinutes: { type: integer }
+        debtMinutes: { type: integer }
+        contractMinutes: { type: integer }
+        lates: { type: integer }
+        earlyDepartures: { type: integer }
+        absenteeism: { type: integer }
+        attendance: { type: integer }
+    HoursAnalyticsResponse:
+      type: object
+      required: [hours, employees, pagination]
+      properties:
+        hours: { type: array, items: { $ref: '#/components/schemas/EmployeeHoursDto' } }
+        employees:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/EmployeeDto' }
+        pagination: { $ref: '#/components/schemas/PaginationMeta' }
+    PlannedHoursResponse:
+      type: object
+      additionalProperties:
+        type: object
+        required: [minutes]
+        properties:
+          minutes: { type: integer }
+    PaginationMeta:
+      type: object
+      required: [pageNumber, pageSize, totalElements, totalPages]
+      properties:
+        pageNumber: { type: integer }
+        pageSize: { type: integer }
+        totalElements: { type: integer }
+        totalPages: { type: integer }
+    # --- Заявки на подмену (Substitution Requests) ---
+    AssignedEmployeeInfo:
+      type: object
+      required: [id, lastName, firstName]
+      properties:
+        id: { type: integer }
+        lastName: { type: string }
+        firstName: { type: string }
+        surname: { type: string, nullable: true }
+    SubstitutionRequest:
+      type: object
+      required: [id, shiftId, isUrgent, statusId]
+      properties:
+        id: { type: integer }
+        shiftId: { type: integer }
+        isUrgent: { type: boolean }
+        statusId: { type: integer, enum: [1, 2, 3] }
+        comment: { type: string, nullable: true }
+        cancellationReason: { type: string, nullable: true }
+        assignedEmployee: { $ref: '#/components/schemas/AssignedEmployeeInfo', nullable: true }
+    SubstitutionRequestCreate:
+      type: object
+      required: [shiftId, isUrgent]
+      properties:
+        shiftId: { type: integer, minimum: 1 }
+        isUrgent: { type: boolean }
+        comment: { type: string, nullable: true, maxLength: 500 }
+    SubstitutionRequestNowCreate:
+      type: object
+      required: [originalShiftId, isUrgent]
+      properties:
+        originalShiftId: { type: integer, minimum: 1 }
+        isUrgent: { type: boolean }
+        comment: { type: string, nullable: true, maxLength: 500 }
+    SubstitutionRequestNowResponse:
+      type: object
+      required: [application, newShift]
+      properties:
+        application: { $ref: '#/components/schemas/SubstitutionRequest' }
+        newShift: { $ref: '#/components/schemas/ShiftResponse' }
+    SubstitutionRequestCancel:
+      type: object
+      required: [requestId, cancellationReason]
+      properties:
+        requestId: { type: integer, minimum: 1 }
+        cancellationReason: { type: string, maxLength: 500 }
+    SubstitutionRequestAssign:
+      type: object
+      required: [employeeId]
+      properties:
+        employeeId: { type: integer, minimum: 1 }
+    ShiftInfo:
+      type: object
+      required: [id, date, startTime, endTime]
+      properties:
+        id: { type: integer }
+        date: { type: string, format: date }
+        startTime: { type: string }
+        endTime: { type: string }
+    OfficeInfo:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        address: { type: string, nullable: true }
+    DivisionInfo:
+      type: object
+      required: [id, name, colorCode]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        colorCode: { type: string }
+    SubstitutionRequestMeta:
+      type: object
+      required: [totalRequests, inProgress, urgent, assigned, cancelled]
+      properties:
+        totalRequests: { type: integer }
+        inProgress: { type: integer }
+        urgent: { type: integer }
+        assigned: { type: integer }
+        cancelled: { type: integer }
+    SubstitutionRequestListItem:
+      type: object
+      required: [id, shiftId, officeId, divisionId, isUrgent, statusId]
+      properties:
+        id: { type: integer }
+        shiftId: { type: integer }
+        officeId: { type: integer }
+        divisionId: { type: integer }
+        position: { type: integer, nullable: true }
+        isUrgent: { type: boolean }
+        statusId: { type: integer, enum: [1, 2, 3] }
+        comment: { type: string, nullable: true }
+        cancellationReason: { type: string, nullable: true }
+        assignedEmployee: { $ref: '#/components/schemas/AssignedEmployeeInfo', nullable: true }
+    SubstitutionRequestListResponse:
+      type: object
+      required: [items, shifts, offices, divisions, meta, pagination]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SubstitutionRequestListItem' }
+        shifts:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/ShiftInfo' }
+        offices:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/OfficeInfo' }
+        divisions:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/DivisionInfo' }
+        meta: { $ref: '#/components/schemas/SubstitutionRequestMeta' }
+        pagination: { $ref: '#/components/schemas/PaginationMeta' }
