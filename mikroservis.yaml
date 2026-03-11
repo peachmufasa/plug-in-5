@@ -1,8 +1,3 @@
----
-title: Сваггер
----
-
-```
 openapi: 3.0.1
 info:
   title: orng-auth-service
@@ -135,5 +130,4 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: J
-```
+      bearerFormat: JWT

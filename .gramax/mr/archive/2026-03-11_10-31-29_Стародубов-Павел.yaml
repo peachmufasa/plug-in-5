@@ -1,0 +1,10 @@
+creator: dxdexe96-ctrl <dxd.exe96@gmail.com>
+targetBranch: master
+createdAt: '2026-03-11 10:31:29'
+approvers:
+- user: peachmufasa <alexandra-novoselova96@yandex.ru>
+  approvedAt: '2026-03-11 10:34:03'
+options:
+  deleteAfterMerge: true
+  squash: true
+description: '111'
