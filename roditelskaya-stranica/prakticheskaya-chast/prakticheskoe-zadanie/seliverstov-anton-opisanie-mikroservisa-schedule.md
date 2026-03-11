@@ -3,6 +3,8 @@ order: 1
 title: Селиверстов Антон описание микросервиса Schedule
 ---
 
+<snippet id="wKA0K"/>
+
 ## 1\. Общая информация о сервисе
 
 <table header="row">
@@ -1094,6 +1096,8 @@ paths:
 </tr>
 </table>
 
+<snippet id="wKA0K"/>
+
 ## 3\. Методы сервиса
 
 ## 3\.1. Метод получения расписания офиса
@@ -1558,10 +1562,6 @@ object
 
     3. Интеграция с **Catalog Service:**
 
-       
-
-       
-
        1. `GET /cities?Id={cityId}`.
 
     4. Получаются:
@@ -1592,7 +1592,7 @@ object
 
        1. `employeeId`;
 
-       2. `fullName`; 
+       2. `fullName`;
 
        3. substitutionGroup;
 
@@ -4296,7 +4296,7 @@ string (time)
 
 4. Валидация сотрудника группы подмены
 
-   1. Выполняется **только если** role = ROLE_REGION_MANAGER в jwt 
+   1. Выполняется **только если** role = ROLE_REGION_MANAGER в jwt
 
    2. Выполняется запрос в Employee Service GET / employees/by-user/\{userId}
 
@@ -4332,7 +4332,7 @@ string (time)
 
    4. если составная смена - на фронте показывается предупреждение
 
-   5. В одном офисе может быть **только одна смена** в день 
+   5. В одном офисе может быть **только одна смена** в день
 
 7. При успешной валидации:
 
@@ -5124,7 +5124,7 @@ string (HH:mm)
 
    2. корректный формат идентификаторов;
 
-   3. `startAt < endAt`. 
+   3. `startAt < endAt`.
 
 3. Получение сотрудника
 
@@ -5206,7 +5206,7 @@ string (HH:mm)
 <tr>
 <td>
 
-**Формат запроса (POST/shifts;  DELETE/shifts/(shiftid);   PUTCH/shifts/(shiftid);  - при выполнении любого из данных запросов должен ассинхронно затем выполняться функционал отправки записи о создании уведомления** 
+**Формат запроса (POST/shifts;  DELETE/shifts/(shiftid);   PUTCH/shifts/(shiftid);  - при выполнении любого из данных запросов должен ассинхронно затем выполняться функционал отправки записи о создании уведомления**
 
 ```
 ```
@@ -5982,7 +5982,7 @@ data: {}
 
 2. **Проверка JWT и прав доступа:**
 
-   1. пользователь авторизован (токен валиден и не просрочен) при нарушении **401 Unauthorized**; 
+   1. пользователь авторизован (токен валиден и не просрочен) при нарушении **401 Unauthorized**;
 
    2. пользователь имеет право на редактирование табеля в данном офисе при нарушении - **403 Forbidden**.
 
@@ -6010,7 +6010,7 @@ data: {}
 
 5. **Сбор ID сотрудников и интеграция с Office Service:**
 
-   1. На основе **комбинации параметров year и month** определяются тип месяца(текущий/прошедший/будущий) 
+   1. На основе **комбинации параметров year и month** определяются тип месяца(текущий/прошедший/будущий)
 
    2. Далее выполняется следующая логика:
 
@@ -6038,9 +6038,9 @@ data: {}
 
          3. Shifts сохраняется во временную коллекцию для дальнейшей логики.
 
-         4. Выполняется вызов `GET /offices/{officeId}/employees`. 
+         4. Выполняется вызов `GET /offices/{officeId}/employees`.
 
-         5. employeeIds формируются как объединение двух множеств: 
+         5. employeeIds формируются как объединение двух множеств:
 
             1. сотрудников из смен в диапазоне от startDate до shiftLimitDate
 
@@ -6090,13 +6090,9 @@ data: {}
 
    3. Определяется количество рабочих дней в месяце как количество календарных дней,
 
-      
-
       приходящихся на **понедельник–пятницу** - calendarWorkingDaysInMonth
 
    4. Для каждого сотрудника определяется количество дней отсутствия
-
-      
 
       absenceDays -- количество записей Absence,
 
@@ -6106,13 +6102,9 @@ data: {}
 
    6. Рассчитывается персональная норма рабочих дней
 
-      
-
       effectiveWorkingDays = calendarWorkingDaysInMonth - absenceDays
 
    7. Рассчитывается месячная нормативная нагрузка
-
-      
 
       normMinutes = effectiveWorkingDays \* dailyNormMinutes
 
@@ -6122,15 +6114,13 @@ data: {}
 
    2. Выполняется запрос к таблице `work_times`:
 
-      
-
       `SELECT * FROM work_times`
 
       `WHERE office_id = {:officeId}`
 
       `AND employee_id IN (:filteredIds)`
 
-      `AND date_on BETWEEN {:startDate}` 
+      `AND date_on BETWEEN {:startDate}`
 
       `AND {:shiftLimitDate}`
 
@@ -6142,17 +6132,17 @@ data: {}
 
           -  Если есть запись из `Absence`, формируется `AbsenceDayDto`.
 
-          -  в поле `type записывается` `"absence"` 
+          -  в поле `type записывается` `"absence"`
 
           -  Дальнейшие проверки для этого дня пропускаются.
 
        2. **Проверка 2 (Подтвержденная смена)**:
 
-          -  Если найдена запись в локальной БД по employeeId, date и officeId, формируется WorkDayDto. isDraft = false; 
+          -  Если найдена запись в локальной БД по employeeId, date и officeId, формируется WorkDayDto. isDraft = false;
 
           -  workedMinutes берется напрямую из поля `worked_minutes таблицы work_time`;
 
-          -  officeId из поля office_id; 
+          -  officeId из поля office_id;
 
           -  `workTime` = вычисляется путем конвертации `worked_minutes` в формат `HH:mm` (например, 480 мин -> "08:00");
 
@@ -6162,7 +6152,7 @@ data: {}
 
           -  Если есть запись из Shifts, формируется WorkDayDto. isDraft = true;
 
-          -  workedMinutes = вычисляется как разница между метками времени конца и начала смены (`endAt - startAt`) в минутах; 
+          -  workedMinutes = вычисляется как разница между метками времени конца и начала смены (`endAt - startAt`) в минутах;
 
           -  `workTime` = результат вычисления разницы, приведенный к строковому формату `HH:mm;`
 
@@ -6636,7 +6626,7 @@ data: {}
 
 2. **Проверка JWT и прав доступа:**
 
-   1. пользователь авторизован (токен валиден и не просрочен) при нарушении **401 Unauthorized**; 
+   1. пользователь авторизован (токен валиден и не просрочен) при нарушении **401 Unauthorized**;
 
    2. пользователь имеет право на редактирование табеля группы подмены в данном регионе при нарушении - **403 Forbidden**.
 
@@ -6702,13 +6692,9 @@ data: {}
 
    3. Определяется количество рабочих дней в месяце как количество календарных дней,
 
-      
-
       приходящихся на **понедельник–пятницу** - calendarWorkingDaysInMonth
 
    4. Для каждого сотрудника определяется количество дней отсутствия
-
-      
 
       absenceDays -- количество записей Absence,
 
@@ -6718,27 +6704,23 @@ data: {}
 
    6. Рассчитывается персональная норма рабочих дней
 
-      
-
       effectiveWorkingDays = calendarWorkingDaysInMonth - absenceDays
 
    7. Рассчитывается месячная нормативная нагрузка
-
-      
 
       normMinutes = effectiveWorkingDays \* dailyNormMinutes
 
 8. **Получение подтвержденных данных из локальной БД (Worktime):**
 
-   1. Выполняется запрос к таблице `worktime`: 
+   1. Выполняется запрос к таблице `worktime`:
 
-      `SELECT employee_id, date_on, MAX(office_id) as office_id, SUM(worked_minutes) as worked_minutes` 
+      `SELECT employee_id, date_on, MAX(office_id) as office_id, SUM(worked_minutes) as worked_minutes`
 
       `FROM worktime`
 
       `WHERE employee_id IN (:employeeIds)`
 
-      `AND date_on BETWEEN :startDate AND :shiftLimitDate` 
+      `AND date_on BETWEEN :startDate AND :shiftLimitDate`
 
       `GROUP BY employee_id, date_on;`
 
@@ -6750,7 +6732,7 @@ data: {}
 
          -  Если на дату есть запись в `Absences`, создается `AbsenceDayDto`.
 
-         -  в поле `type записывается` `"absence".` 
+         -  в поле `type записывается` `"absence".`
 
          -  Остальные данные за этот день игнорируются.
 
@@ -6772,7 +6754,7 @@ data: {}
 
          -  в поле `type записывается` `"work"`
 
-      4. **Проверка 4 (Пустой день):** 
+      4. **Проверка 4 (Пустой день):**
 
          -  Если данных нет ни в одном источнике cоздаем EmptyDayDto (`type: "empty"`, `date: {date}`).
 
@@ -7756,10 +7738,7 @@ object
 
    3. Из смен извлекается множество уникальных employeeId.
 
-
-   1.  
-
-      
+   4.  
 
 9. Формирование итогового списка сотрудников
 
@@ -7831,7 +7810,7 @@ object
 
 16. Возврат результата
 
-    1. 200 OK + агрегированный ответ расписания 
+    1. 200 OK + агрегированный ответ расписания
 
 </td>
 </tr>
@@ -8390,7 +8369,7 @@ string
 
    2. `employeeId`, тип отсутствия, даты;
 
-   3. результат операции.   
+   3. результат операции.
 
 </td>
 </tr>
@@ -8621,13 +8600,9 @@ HTTP 204 No Content
 
    3. Выполняется только если role = **REGION_MANAGER в** jwt
 
-      
-
       По employeeId из отсутствий выполняется запрос GET /employees?id=\{employeeId} в Employee Service для получения данных сотрудника.
 
       1. Проверяется является ли сотрудник работкником фронта подмены
-
-         
 
          Если **substitutionGroup = false**, операция удаления смены запрещается.
 
@@ -8886,13 +8861,9 @@ HTTP 204 No Content
 
    3. Выполняется только если role = **REGION_MANAGER в** jwt
 
-      
-
       По employeeId из отсутствий выполняется запрос GET /employees?id=\{employeeId} в Employee Service для получения данных сотрудника.
 
       1. Проверяется является ли сотрудник работкником фронта подмены
-
-         
 
          Если **substitutionGroup = false**, операция удаления смены запрещается.
 
@@ -9151,13 +9122,9 @@ HTTP 204 No Content
 
    3. Выполняется только если role = **REGION_MANAGER в** jwt
 
-      
-
       По employeeId из отсутствий выполняется запрос GET /employees?id=\{employeeId} в Employee Service для получения данных сотрудника.
 
       1. Проверяется является ли сотрудник работкником фронта подмены
-
-         
 
          Если **substitutionGroup = false**, операция удаления смены запрещается.
 
@@ -9185,7 +9152,7 @@ HTTP 204 No Content
 </tr>
 </table>
 
-## 3\.19 Метода отображения своего расписания для сотрудника на месяц 
+## 3\.19 Метода отображения своего расписания для сотрудника на месяц
 
 <table header="row">
 <tr>
@@ -9408,13 +9375,9 @@ HTTP 204 No Content
 
    3. Выполняется только если role = **REGION_MANAGER в** jwt
 
-      
-
       По employeeId из отсутствий выполняется запрос GET /employees?id=\{employeeId} в Employee Service для получения данных сотрудника.
 
       1. Проверяется является ли сотрудник работкником фронта подмены
-
-         
 
          Если **substitutionGroup = false**, операция удаления смены запрещается.
 

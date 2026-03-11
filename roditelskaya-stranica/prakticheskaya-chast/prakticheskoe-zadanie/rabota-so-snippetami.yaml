@@ -1,0 +1,955 @@
+openapi: 3.0.0
+info:
+  title: Schedule Service API
+  version: 0.8.0
+  description: API сервиса графика смен
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Код ошибки
+        message:
+          type: string
+          description: Описание ошибки
+      
+    LocalTime:
+      type: object
+      description: Время окончания смены
+      example: '18:00'
+      properties:
+        hour:
+          type: integer
+          format: int32
+        minute:
+          type: integer
+          format: int32
+        second:
+          type: integer
+          format: int32
+        nano:
+          type: integer
+          format: int32
+
+    ShiftUpdateRequestDto:
+      type: object
+      description: Запрос на обновление времени смены
+      required:
+        - startAt
+        - endAt
+      properties:
+        startAt:
+          $ref: '#/components/schemas/LocalTime'
+        endAt:
+          $ref: '#/components/schemas/LocalTime'
+
+    ShiftResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID смены
+        employeeId:
+          type: integer
+          description: ID сотрудника
+        officeId:
+          type: integer
+          description: ID офиса
+        sheduledOn:
+          type: string
+          format: date
+          description: Дата смены
+          example: "2023-04-04"
+        startAt:
+          type: string
+          format: time
+          description: Время начала смены
+          example: "09:00"
+        endAt:
+          type: string
+          format: time
+          description: Время окончания смены
+          example: "18:00"
+
+    AbsencesCreateRequestDto:
+      type: object
+      description: Создание отсутствия сотрудника
+      required:
+        - employeeId
+        - absenceTypeId
+        - startOn
+        - endOn
+      properties:
+        employeeId:
+          type: integer
+          format: int64
+          description: ID сотрудника
+          example: 101
+        absenceTypeId:
+          type: integer
+          format: int64
+          description: ID типа отсутствия
+          example: 1
+        startOn:
+          type: string
+          format: date
+          description: Дата начала отсутствия
+          example: '2026-01-20'
+        endOn:
+          type: string
+          format: date
+          description: Дата конца отсутствия
+          example: '2026-01-25'
+
+    AbsenceResponseDto:
+      type: object
+      description: Отсутствие сотрудника на конкретную дату
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID отсутствия
+          example: 5001
+        employeeId:
+          type: integer
+          format: int64
+          description: ID сотрудника
+          example: 1
+        absentOn:
+          type: string
+          format: date
+          description: Дата отсутствия
+          example: '2026-01-22'
+        absenceType:
+          $ref: '#/components/schemas/AbsenceTypeResponseDto'
+
+    AbsenceTypeResponseDto:
+      type: object
+      description: Тип отсутствия сотрудника
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          description: Код типа отсутствия
+          example: VACATION
+        name:
+          type: string
+          description: Отображаемое название
+          example: Отпуск
+        description:
+          type: string
+          description: Описание типа отсутствия
+          example: Плановый ежегодный отпуск
+        allowsWeekends:
+          type: boolean
+          description: Разрешено ли назначение на выходные
+          example: true
+
+    EmployeeScheduleResponseDto:
+      type: object
+      description: Данные о сменах сотрудника
+      properties:
+        employeeId:
+          type: integer
+          description: ID сотрудника
+        fullName:
+          type: string
+          description: ФИО сотрудника
+          example: "Иванов Иван Иванович"
+        substitutionGroup:
+          type: boolean
+          description: Принадлежность к группе подмены
+          example: "Иванов Иван Иванович"
+        attachedToOffice:
+          type: boolean
+          description: Принадлежность к офису
+          example: "Иванов Иван Иванович"
+        shifts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShiftResponseDto'
+        absences:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbsenceResponseDto'
+
+    EmployeeShiftsResponseDto:
+      type: object
+      description: Список смен сотрудника (группировка по employeeId)
+      properties:
+        employeeId:
+          type: integer
+          format: int64
+          description: ID сотрудника
+          example: 42
+        shifts:
+          type: array
+          description: Смены сотрудника
+          items:
+            $ref: '#/components/schemas/ShiftResponseDto'
+
+
+    SchedulerResponse:
+      type: object
+      description: Ответ с расписанием смен, сгруппированным по должностям и сотрудникам
+      additionalProperties:
+        type: object
+        additionalProperties:
+          $ref: '#/components/schemas/EmployeeScheduleResponseDto'
+
+    CreateShiftRequest:
+      type: object
+      required: [employeeId, officeId, startOn, endOn, startTime, endTime]
+      properties:
+        employeeId:
+          type: integer
+          description: ID сотрудника
+        officeId:
+          type: integer
+          description: ID офиса
+        startOn:
+          type: string
+          format: date
+          description: Дата начала смены 
+          example: "2023-04-04"
+        endOn:
+          type: string
+          format: date
+          description: Дата конца смены 
+          example: "2023-04-04"
+        startAt:
+          type: string
+          format: time
+          description: Время начала смены
+          example: "09:00"
+        endAt:
+          type: string
+          format: time
+          description: Время окончания смены
+          example: "18:00"
+          
+    TimesheetResponse:
+      type: object
+      description: >
+        Табель учета рабочего времени, сгруппированный по должностям.
+        data — map: ключ = position.name, значение = список сотрудников.
+      properties:
+        data:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/EmployeeTimesheetDto'
+
+    EmployeeTimesheetDto:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+          format: int64
+        fullName:
+          type: string
+        position:
+          type: object
+          properties:
+            id: { type: integer }
+            code: { type: string }
+            name: { type: string }
+        days:
+          type: array
+          description: Дни месяца, отсортированы по dateOn ASC
+          items:
+            $ref: '#/components/schemas/TimesheetDayDto'
+        summary:
+          $ref: '#/components/schemas/TimesheetSummaryDto'
+
+    TimesheetDayDto:
+      oneOf:
+        - $ref: '#/components/schemas/WorkDayDto'
+        - $ref: '#/components/schemas/AbsenceDayDto'
+        - $ref: '#/components/schemas/EmptyDayDto' 
+      discriminator:
+        propertyName: type
+        mapping:
+          work: '#/components/schemas/WorkDayDto'
+          absence: '#/components/schemas/AbsenceDayDto'
+          empty: '#/components/schemas/EmptyDayDto'
+      description: >
+        День либо рабочий (план/факт), либо отсутствие.
+        Одновременно быть не может.
+
+    WorkDayDto:
+      type: object
+      required: [type, dateOn, officeId, workTime, workedMinutes, isDraft]
+      properties:
+        type:
+          type: string
+          enum: [work]
+        dateOn:
+          type: string
+          format: date
+        officeId:
+          type: integer
+          format: int64
+        workTime:
+          type: string
+          example: "08:00"
+        workedMinutes:
+          type: integer
+          example: 480
+        isDraft:
+          type: boolean
+          description: "true — данные из плана (смены), false — подтвержденный факт"
+          example: true
+          
+    AbsenceDayDto:
+      type: object
+      required: [type, dateOn, absenceType]
+      properties:
+        type:
+          type: string
+          enum: [absence]
+        dateOn:
+          type: string
+          format: date
+        absenceType:
+          $ref: '#/components/schemas/AbsenceTypeDto'
+
+    AbsenceTypeDto:
+      type: object
+      required: [id, code, name]
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+          example: sick 
+        name:
+          type: string
+          example: больничный 
+    
+    EmptyDayDto:
+      type: object
+      required: [type, dateOn]
+      properties:
+        type:
+          type: string
+          enum: [empty]
+        dateOn:
+          type: string
+          format: date
+
+    TimesheetSummaryDto:
+      type: object
+      properties:
+        totalWorkTime: { type: string, example: "120:00" }
+        totalMinutes: { type: integer }
+        monthlyNorm: { type: string, example: "160:00" }
+        normMinutes: { type: integer }
+        balanceTime: { type: string, example: "-40:00" }
+        balanceMinutes: { type: integer }
+          
+    WorktimeRequest:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - employeeId
+              - officeId
+              - dateOn
+              - workedMinutes
+            properties: 
+              employeeId: { type: integer, format: int64 }
+              officeId: { type: integer, format: int64 }
+              dateOn: { type: string, format: date }
+              workedMinutes: { type: integer }
+
+    WorktimeResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 585
+        officeId:
+          type: integer
+          format: int64
+          example: 1
+        employeeId:
+          type: integer
+          format: int64
+          example: 19
+        dateOn:
+          type: string
+          format: date
+          example: "2026-03-02"
+        workedMinutes:
+          type: integer
+          example: 480
+
+paths:
+  /schedules/by-office/{officeId}:
+    get:
+      summary: Получение графика смен офиса
+      tags: [Schedule]
+      security:
+        - bearerAuth: []
+      description: |
+        Получение списка смен, сгруппированных по должности сотрудника и самим сотрудникам.
+      parameters:
+        - name: officeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 4
+          description: Идентификатор офиса
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 2026
+          description: Календарный год
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            example: 4
+          description: Порядковый номер месяца (1-12)
+      responses:
+        '200':
+          description: Успешное получение расписания
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchedulerResponse'
+        '400':
+          description: Некорректные параметры запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Доступ запрещен
+        '502':
+          description: Ошибка связи с Employee Service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /schedules/by-employee/{employeeId}:
+    get:
+      summary: Получение личного графика смен
+      tags: [Schedule]
+      security:
+        - bearerAuth: []
+      description: Получение списка смен текущего пользователя
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 4
+          description: Идентификатор сотрудника
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 2026
+          description: Календарный год
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            example: 4
+          description: Порядковый номер месяца (1-12)
+      responses:
+        '200':
+          description: Успешное получение расписания
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shifts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShiftResponseDto'
+                  absences:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AbsenceResponseDto'
+        '400':
+          description: Некорректные параметры запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Доступ запрещен
+
+  /shifts:
+    post:
+      summary: Создание смены
+      tags: [Shifts]
+      security:
+        - bearerAuth: []
+      description: Создание новой рабочей смены для сотрудника
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateShiftRequest'
+      responses:
+        '201':
+          description: Смена успешно изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftResponseDto'
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Недостаточно 
+        '409':
+          description: Конфликт дат (пересечение с другими отсутствиями или сменами)
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Shifts
+      summary: Получить список смен (сгруппировано по employeeId)
+      operationId: getShifts
+      parameters:
+        - name: officeId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+
+        - name: employeeIds
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeShiftsResponseDto'
+
+        '400':
+          description: Ошибка валидации запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '403':
+          description: Нет прав доступа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: обновление времени смен
+      tags: [Shifts]
+      security:
+        - bearerAuth: []
+      description: |
+        Массовое редактирование времени начала и окончания смен.
+        Обновление применяется ко всем сменам, переданным в shiftIds.
+      parameters:
+        - name: shiftIds
+          in: query
+          required: true
+          schema:
+            type: array
+            minItems: 1
+            items:
+              type: integer
+              format: int64
+          description: Список идентификаторов смен
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftUpdateRequestDto'
+      responses:
+        '200':
+          description: Смены успешно обновлены
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShiftResponseDto'
+        '400':
+          description: Ошибка валидации или нарушение бизнес-правил
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Недостаточно прав
+        '404':
+          description: Одна или несколько смен не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Конфликт с уже существуей сменой
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: удаление смен
+      tags: [Shifts]
+      security:
+        - bearerAuth: []
+      description: |
+        Массовое удаление смен по списку идентификаторов.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: array
+            minItems: 1
+            items:
+              type: integer
+              format: int64
+          description: Список идентификаторов смен
+      responses:
+        '204':
+          description: Смены успешно удалены
+        '400':
+          description: Ошибка валидации запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Недостаточно прав
+        '404':
+          description: Одна или несколько смен не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+  /absences:
+    post:
+      tags:
+        - Absences
+      summary: Создать отсутствие сотрудника
+      operationId: createAbsence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbsencesCreateRequestDto'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AbsenceResponseDto'
+        '400':
+          description: Ошибка валидации запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Нет прав доступа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Сотрудник или тип отсутствия не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Конфликт дат (пересечение с другими отсутствиями или сменами)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Absences
+      summary: Удалить отсутствие
+      operationId: deleteAbsence
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: array
+            minItems: 1
+            items:
+              type: integer
+              format: int64
+      responses:
+        '204':
+          description: No Content
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Нет прав доступа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Отсутствие не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /absence-types:
+    get:
+      summary: Получить типы отсутствий
+      operationId: getAbsenceTypes
+      tags:
+        - Absences
+      responses:
+        '200':
+          description: Список типов отсутствий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AbsenceTypeResponseDto'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Нет прав доступа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+  /timesheets/by-office/{officeId}:
+    get:
+      summary: Получение табеля выработки
+      tags:
+        - Timesheet
+      parameters:
+        - name: officeId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+        - name: positionId
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+        - name: year
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: month
+          in: query
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 12 }
+      responses:
+        '200':
+          description: Табель успешно сформирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimesheetResponse'
+        '400':
+          description: Ошибка валидации данных
+        '401':
+          description: Пользователь неавторизован
+        '500':
+          description: Внутренняя ошибка сервера 
+  
+  /timesheets/by-region/{regionId}:
+    get:
+      summary: Получение табеля выработки
+      tags:
+        - Timesheet
+      parameters:
+        - name: regionId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+        - name: positionId
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+        - name: year
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: month
+          in: query
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 12 }
+      responses:
+        '200':
+          description: Табель успешно сформирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimesheetResponse'
+        '400':
+          description: Ошибка валидации данных
+        '401':
+          description: Пользователь неавторизован 
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /worktimes:
+    post:
+      summary: Массовое подтверждение или изменение отработанного времени
+      description: >
+        Идемпотентный метод.
+        Повторный запрос с одинаковыми (employeeId, officeId, dateOn)
+        приводит к обновлению существующей записи.
+      tags:
+        - Timesheet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorktimeRequest'
+      responses:
+        '200':
+          description: Данные успешно сохранены.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorktimeResponse'
+        '400':
+          description: Ошибка валидации данных
+        '401':
+          description: Пользователь неавторизован
+        '403':
+          description: Недостаточно прав
+        '500':
+          description: Внутренняя ошибка сервера
