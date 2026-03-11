@@ -1,0 +1,9 @@
+creator: deshisback <aut1matik@yandex.ru>
+targetBranch: master
+createdAt: '2026-03-11 10:29:57'
+approvers:
+- user: peachmufasa <alexandra-novoselova96@yandex.ru>
+options:
+  deleteAfterMerge: true
+  squash: true
+description: Слейте пжпжпж
