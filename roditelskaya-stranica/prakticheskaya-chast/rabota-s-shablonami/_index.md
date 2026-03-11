@@ -22,5 +22,3 @@ title: Работа с шаблонами
 <image src="./rabota-s-shablonami.png" crop="0,0,100,100" objects="annotation,25.2475,10.4331,,top-left&annotation,41.0066,27.1654,,top-left&annotation,71.5347,28.3465,,top-left" width="1212px" height="508px" float="center"/>
 
 ## Пример страницы по шаблону
-
-[Ссылка на страницу с примером](./opisanie-mikroservisa-po-shablonu)

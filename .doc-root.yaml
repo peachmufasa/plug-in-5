@@ -1,5 +1,59 @@
 title: Plug-in 6
 syntax: XML
 supportedLanguages: []
-properties: []
+properties:
+  - name: Дата
+    type: Date
+    icon: calendar
+  - name: ФИО Аналитика
+    type: Text
+    icon: person-standing
+  - name: роль пользователя
+    type: Text
+    icon: user
+  - name: действие/функциональность
+    type: Text
+    icon: axe
+  - name: бизнес-цель/ценность
+    type: Text
+    icon: banknote-arrow-up
+  - name: приоритет
+    type: Many
+    icon: arrow-up
+    values:
+      - Высокий
+      - Средний
+      - Низкий
+  - name: модуль системы
+    type: Text
+    icon: component
+  - name: версия
+    type: Numeric
+    icon: app-window
+  - name: AC1
+    type: Text
+  - name: критерий 1
+    type: Text
+  - name: критерий 2
+    type: Text
+  - name: критерий 3
+    type: Text
+  - name: критерий 4
+    type: Text
+  - name: критерий 5
+    type: Text
+  - name: ссылка на BPMN
+    type: Text
+    icon: link
+  - name: ссылка на Figma
+    type: Text
+    icon: link
+  - name: что должно быть выполнено до начала работы
+    type: Text
+  - name: что происходит после выполнения
+    type: Text
+  - name: >-
+      дополнительный контекст, ограничения, технические нюансы, вопросы к
+      команде
+    type: Text
 style: bright-orange
